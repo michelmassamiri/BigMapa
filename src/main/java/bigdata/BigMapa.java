@@ -6,8 +6,6 @@ import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.JavaSparkContext;
 import org.apache.spark.input.PortableDataStream;
 
-import javax.xml.bind.DatatypeConverter;
-
 public class BigMapa {
 
     public static void main (String[] args) {
@@ -15,36 +13,31 @@ public class BigMapa {
         SparkConf conf = new SparkConf().setAppName("Test");
         JavaSparkContext context = new JavaSparkContext(conf);
 
-        JavaPairRDD<String, PortableDataStream> rdd = context.binaryFiles("hdfs://young:9000/user/raw_data/dem3/s87w180.hgt");
-        /*
-        JavaRDD<Object> rddObject = rdd.map(stringPortableDataStreamTuple2 -> {
-            String fileName = stringPortableDataStreamTuple2._1;
-            PortableDataStream content = stringPortableDataStreamTuple2._2;
+        JavaPairRDD<String, PortableDataStream> rdd = context.binaryFiles("hdfs://young:9000/user/raw_data/dem3/N44W002.hgt");
 
-            byte[] pixels = content.toArray();
-            String base64Encoded = DatatypeConverter.printBase64Binary(pixels);
-            return (fileName + "," + base64Encoded).getBytes();
-        });
-        */
-
-        JavaRDD<byte[]> rddBytes = rdd.map(stringPortableDataStreamTuple2 -> {
+        JavaRDD<short[]> rddHeights = rdd.map(stringPortableDataStreamTuple2 -> {
             //String fileName = stringPortableDataStreamTuple2._1;
             PortableDataStream content = stringPortableDataStreamTuple2._2;
-
             byte[] pixels = content.toArray();
-            //byte[] base64Encoded = DatatypeConverter.printBase64Binary(pixels).getBytes();
+            int size = 1201;
+            int counter = 0;
+            short[] height = new short[size * size];
+            byte[] tmp = new byte[2];
 
-            // TODO
-            // hgt stocke en short big indian (2 octets inversés)
+            for(int i = 1; i < pixels.length; i+=2) {
+                tmp[0] = pixels[i-1];
+                tmp[1] = pixels[i];
 
-            return pixels;
+                height[counter] = (short)(((tmp[0] & 0xFF) << 8) | (tmp[1]) & 0xFF);
+                counter++;
+            }
+            return height;
         });
 
-
-        //System.out.println(rddObject.collect().get(0));
-
-        //JavaRDD<byte[]> test = context.binaryRecords("hdfs://young:9000/user/raw_data/dem3/s87w180.hgt", 16);
-        //System.out.println(test.count());
-
+        rddHeights.foreach(ints -> {
+            for(int i = 0; i < ints.length; ++i) {
+                System.out.println(ints[i]);
+            }
+        });
     }
 }
