@@ -81,8 +81,11 @@ public class TileOperations {
                     DataBuffer.TYPE_BYTE);
 
             BufferedImage bfImage = new BufferedImage(colorModel, raster, false, null);
+            ImageIO.write(bfImage.getSubimage(0, 0, 600, 600), "png", new File("output" + 0 + ".png"));
+            ImageIO.write(bfImage.getSubimage(600, 0, 600, 600), "png", new File("output" + 1 + ".png"));
+            ImageIO.write(bfImage.getSubimage(0, 600, 600, 600), "png", new File("output" + 2 + ".png"));
+            ImageIO.write(bfImage.getSubimage(600, 600, 600, 600), "png", new File("output" + 3 + ".png"));
 
-            ImageIO.write(bfImage, "png", new File("output.png"));
 
         });
     }
