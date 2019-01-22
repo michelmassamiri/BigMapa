@@ -2,12 +2,14 @@ let express = require('express')
 let router = express.Router()
 
 const hbase = require('hbase')
+/* 
 const client = new hbase.Client({
     host: '0.0.0.0',
     port: 8080
 })
 
-const tileRow = new hbase.Row(client, 'test', '1')
+const tileRow = new hbase.Row(client, 'test', '1') 
+*/
 
 hbase()
 .table('test')
