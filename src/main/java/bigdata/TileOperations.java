@@ -60,14 +60,7 @@ public class TileOperations {
             // Width/Height = 1201;
             ByteBuffer buffer = ByteBuffer.allocate(3 * 1201 * 1201);
             for (short h : heights) {
-                switch (h) {
-                    case 0:
-                        buffer.put(new byte[]{(byte) 0, (byte) 128, (byte) 128});
-                        break;
-                    default:
-                        buffer.put(new byte[]{(byte) h, (byte) 0, (byte) 0});
-                        break;
-                }
+                    buffer.put(short2color(h));
             }
             buffer.rewind();
             DataBufferByte dbb = new DataBufferByte(buffer.array(), buffer.capacity());
@@ -88,9 +81,26 @@ public class TileOperations {
                     DataBuffer.TYPE_BYTE);
 
             BufferedImage bfImage = new BufferedImage(colorModel, raster, false, null);
+            ImageIO.write(bfImage.getSubimage(0, 0, 600, 600), "png", new File("output" + 0 + ".png"));
+            ImageIO.write(bfImage.getSubimage(600, 0, 600, 600), "png", new File("output" + 1 + ".png"));
+            ImageIO.write(bfImage.getSubimage(0, 600, 600, 600), "png", new File("output" + 2 + ".png"));
+            ImageIO.write(bfImage.getSubimage(600, 600, 600, 600), "png", new File("output" + 3 + ".png"));
 
-            ImageIO.write(bfImage, "png", new File("output.png"));
 
         });
     }
+
+    private static byte[] short2color(short s) {
+        if (s > 250) return new byte[] {(byte) 255, (byte) 245, (byte) 235};
+        if (s > 225) return new byte[] {(byte) 253, (byte) 174, (byte) 107};
+        if (s > 200) return new byte[] {(byte) 166, (byte) 54, (byte) 3};
+        if (s > 175) return new byte[] {(byte) 127, (byte) 39, (byte) 4};
+        if (s > 150) return new byte[] {(byte) 0, (byte) 68, (byte) 27};
+        if (s > 50) return new byte[] {(byte) 35, (byte) 139, (byte) 69};
+        if (s > 25) return new byte[] {(byte) 65, (byte) 171, (byte) 93};
+        if (s > 10) return new byte[] {(byte) 116, (byte) 196, (byte) 118};
+        if (s > 5) return new byte[] {(byte) 217, (byte)214, (byte)163};
+        return new byte[] {(byte) 8, (byte) 48, (byte) 107};
+    }
+
 }
