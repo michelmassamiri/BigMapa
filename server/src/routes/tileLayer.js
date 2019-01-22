@@ -3,7 +3,7 @@ let router = express.Router()
 
 const hbase = require('hbase')
 const client = new hbase.Client({
-    host: 'zappa',
+    host: '0.0.0.0',
     port: 8080
 })
 
