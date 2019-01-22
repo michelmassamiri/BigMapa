@@ -6,13 +6,6 @@ import org.apache.spark.api.java.JavaSparkContext;
 import org.apache.spark.input.PortableDataStream;
 import scala.Tuple2;
 
-import javax.imageio.ImageIO;
-import java.awt.*;
-import java.awt.color.ColorSpace;
-import java.awt.image.*;
-import java.io.File;
-import java.nio.ByteBuffer;
-
 public class BigMapa {
 
     public static void main(String[] args) {
