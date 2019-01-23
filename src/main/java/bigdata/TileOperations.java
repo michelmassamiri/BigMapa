@@ -1,9 +1,12 @@
 package bigdata;
 
 import org.apache.commons.lang.StringUtils;
+import org.apache.hadoop.hbase.client.Put;
+import org.apache.hadoop.hbase.io.ImmutableBytesWritable;
 import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.input.PortableDataStream;
 import scala.Tuple2;
+import scala.util.parsing.combinator.testing.Str;
 
 import javax.imageio.ImageIO;
 import java.awt.*;
@@ -12,13 +15,14 @@ import java.awt.image.*;
 import java.io.File;
 import java.nio.ByteBuffer;
 
-public class TileOperations {
+public class TileOperations  {
     private static final int size = 1201;
 
     public JavaPairRDD<String, short[]> extractHeightLatLong(JavaPairRDD<String, PortableDataStream> rddEntry) {
         JavaPairRDD<String, short[]> rddHeightsLatLong = rddEntry.mapToPair(stringPortableDataStreamTuple2 -> {
             /* Extract 1st and last latitude, longitude of the tile */
             String fileName = stringPortableDataStreamTuple2._1;
+            System.out.println(fileName);
             String[] tokens = fileName.split("/");
             if(tokens[6] == null || StringUtils.isEmpty(tokens[6])) {
                 throw new Exception("Error Path file for job spark");
@@ -34,6 +38,7 @@ public class TileOperations {
             double lngMax = lng + (double)1200 * .001/(double)size;
             String newKey = '(' + String.valueOf(latMin)+ ',' + String.valueOf(lngMin)+ ')' + ',' +
                     '(' + String.valueOf(latMax )+ ',' + String.valueOf(lngMax )+ ')';
+
             /* Extract the heights of the tile */
             PortableDataStream content = stringPortableDataStreamTuple2._2;
             byte[] pixels = content.toArray();
@@ -81,12 +86,15 @@ public class TileOperations {
                     DataBuffer.TYPE_BYTE);
 
             BufferedImage bfImage = new BufferedImage(colorModel, raster, false, null);
-            ImageIO.write(bfImage.getSubimage(0, 0, 600, 600), "png", new File("output" + 0 + ".png"));
-            ImageIO.write(bfImage.getSubimage(600, 0, 600, 600), "png", new File("output" + 1 + ".png"));
-            ImageIO.write(bfImage.getSubimage(0, 600, 600, 600), "png", new File("output" + 2 + ".png"));
-            ImageIO.write(bfImage.getSubimage(600, 600, 600, 600), "png", new File("output" + 3 + ".png"));
+            insertTile(stringTuple2._1, bfImage.getSubimage(0, 0, 600, 600), 0);
+            insertTile(stringTuple2._1, bfImage.getSubimage(600, 0, 600, 600), 1);
+            insertTile(stringTuple2._1, bfImage.getSubimage(0, 600, 600, 600), 2);
+            insertTile(stringTuple2._1, bfImage.getSubimage(600, 600, 600, 600), 3);
 
-
+//            ImageIO.write(bfImage.getSubimage(0, 0, 600, 600), "png", new File("output" + 0 + ".png"));
+//            ImageIO.write(bfImage.getSubimage(600, 0, 600, 600), "png", new File("output" + 1 + ".png"));
+//            ImageIO.write(bfImage.getSubimage(0, 600, 600, 600), "png", new File("output" + 2 + ".png"));
+//            ImageIO.write(bfImage.getSubimage(600, 600, 600, 600), "png", new File("output" + 3 + ".png"));
         });
     }
 
@@ -101,6 +109,25 @@ public class TileOperations {
         if (s > 10) return new byte[] {(byte) 116, (byte) 196, (byte) 118};
         if (s > 5) return new byte[] {(byte) 217, (byte)214, (byte)163};
         return new byte[] {(byte) 8, (byte) 48, (byte) 107};
+    }
+
+    private static void insertTile(String key, BufferedImage bf, int index) {
+        String[] tokens = key.split(",");
+        double latMin = Double.parseDouble(tokens[0].substring(1, 4));
+        double lngMin = Double.parseDouble(tokens[1].substring(0, 4));
+        double latMax = Double.parseDouble(tokens[2].substring(1));
+        double lngMax = Double.parseDouble(tokens[3].substring(0, tokens[3].length() -1));
+        double x = (lngMin + 180) * 2;
+        double y = (latMin + 90) * 2;
+        if(index == 1) ++x;
+        if(index == 2) ++y;
+        if(index == 3) {
+            ++x;
+            ++y;
+        }
+
+        String hbaseRow = x + "," + y;
+        HBaseOperations.createRow(hbaseRow, latMin, lngMin, latMax, lngMax, 8, bf);
     }
 
 }
