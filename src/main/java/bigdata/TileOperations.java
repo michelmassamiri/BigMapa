@@ -1,24 +1,22 @@
 package bigdata;
 
 import org.apache.commons.lang.StringUtils;
-import org.apache.hadoop.hbase.client.Put;
-import org.apache.hadoop.hbase.io.ImmutableBytesWritable;
 import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.input.PortableDataStream;
 import scala.Tuple2;
-import scala.util.parsing.combinator.testing.Str;
 
 import javax.imageio.ImageIO;
 import java.awt.*;
 import java.awt.color.ColorSpace;
 import java.awt.image.*;
-import java.io.File;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.nio.ByteBuffer;
 
 public class TileOperations  {
     private static final int size = 1201;
 
-    public JavaPairRDD<String, short[]> extractHeightLatLong(JavaPairRDD<String, PortableDataStream> rddEntry) {
+    public static JavaPairRDD<String, short[]> extractHeightLatLong(JavaPairRDD<String, PortableDataStream> rddEntry) {
         JavaPairRDD<String, short[]> rddHeightsLatLong = rddEntry.mapToPair(stringPortableDataStreamTuple2 -> {
             /* Extract 1st and last latitude, longitude of the tile */
             String fileName = stringPortableDataStreamTuple2._1;
@@ -36,8 +34,7 @@ public class TileOperations  {
             double lngMin = lng;
             double latMax = lat + (double)1200 * 1./(double)size;
             double lngMax = lng + (double)1200 * .001/(double)size;
-            String newKey = '(' + String.valueOf(latMin)+ ',' + String.valueOf(lngMin)+ ')' + ',' +
-                    '(' + String.valueOf(latMax )+ ',' + String.valueOf(lngMax )+ ')';
+            String newKey = String.valueOf(latMin) + ',' + String.valueOf(lngMin);
 
             /* Extract the heights of the tile */
             PortableDataStream content = stringPortableDataStreamTuple2._2;
@@ -58,6 +55,7 @@ public class TileOperations  {
         return rddHeightsLatLong;
     }
 
+/*
     public void generateTiles(JavaPairRDD<String, short[]> rdd) {
         rdd.foreach(stringTuple2 -> {
             short[] heights = stringTuple2._2;
@@ -97,6 +95,7 @@ public class TileOperations  {
 //            ImageIO.write(bfImage.getSubimage(600, 600, 600, 600), "png", new File("output" + 3 + ".png"));
         });
     }
+*/
 
     private static byte[] short2color(short s) {
         if (s > 250) return new byte[] {(byte) 255, (byte) 245, (byte) 235};
@@ -111,23 +110,48 @@ public class TileOperations  {
         return new byte[] {(byte) 8, (byte) 48, (byte) 107};
     }
 
-    private static void insertTile(String key, BufferedImage bf, int index) {
-        String[] tokens = key.split(",");
-        double latMin = Double.parseDouble(tokens[0].substring(1, 4));
-        double lngMin = Double.parseDouble(tokens[1].substring(0, 4));
-        double latMax = Double.parseDouble(tokens[2].substring(1));
-        double lngMax = Double.parseDouble(tokens[3].substring(0, tokens[3].length() -1));
-        double x = (lngMin + 180) * 2;
-        double y = (latMin + 90) * 2;
-        if(index == 1) ++x;
-        if(index == 2) ++y;
-        if(index == 3) {
-            ++x;
-            ++y;
+    protected static byte[] generatePng(short[] heights) throws IOException {
+        // Bytes per pixel = 3;
+        // Width/Height = 1201;
+        ByteBuffer buffer = ByteBuffer.allocate(3 * 1201 * 1201);
+        for (short height : heights) {
+            buffer.put(short2color(height));
         }
+        buffer.rewind();
+        DataBufferByte dbb = new DataBufferByte(buffer.array(), buffer.capacity());
+        WritableRaster raster = Raster.createInterleavedRaster(
+                dbb,
+                1201, 1201,
+                1201 * 3,
+                3,
+                new int[]{0, 1, 2},
+                null);
 
-        String hbaseRow = x + "," + y;
-        HBaseOperations.createRow(hbaseRow, latMin, lngMin, latMax, lngMax, 8, bf);
+        ColorModel colorModel = new ComponentColorModel(
+                ColorSpace.getInstance(ColorSpace.CS_sRGB),
+                new int[]{8, 8, 8},
+                false,
+                false,
+                Transparency.OPAQUE,
+                DataBuffer.TYPE_BYTE);
+
+        BufferedImage bfImage = new BufferedImage(colorModel, raster, false, null);
+        bfImage = bfImage.getSubimage(0, 0, 1200, 1200);
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        ImageIO.write(bfImage, "png", baos);
+        baos.flush();
+        byte[] imageInByte = baos.toByteArray();
+        return imageInByte;
+    }
+
+    protected static Tile extractKey(String key, int zoom) {
+        String[] tokens = key.split(",");
+        double latMin = Double.parseDouble(tokens[0]);
+        double lngMin = Double.parseDouble(tokens[1]);
+        int x = (int) Math.round(lngMin) + 180;
+        int y = (int) Math.round(latMin) + 90;
+
+        return new Tile(x, y, zoom);
     }
 
 }
