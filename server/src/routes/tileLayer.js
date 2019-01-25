@@ -37,9 +37,6 @@ router.get('/api.tiles/:x/:y/:z', (req, res, next) => {
             .row(rowID)
             .get('data:image', (error, value) => {
                 val = value[0].$
-                // console.info(val)
-                /*val = "ahamz"
-                send(`<img src="data:image/png;base64,"+${val}`)*/
                 let data = hexa2img(val)
                 fs.writeFile(fileName, data, (err) => {
                     if (err) throw err;
