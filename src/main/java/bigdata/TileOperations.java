@@ -20,21 +20,18 @@ public class TileOperations  {
         JavaPairRDD<String, short[]> rddHeightsLatLong = rddEntry.mapToPair(stringPortableDataStreamTuple2 -> {
             /* Extract 1st and last latitude, longitude of the tile */
             String fileName = stringPortableDataStreamTuple2._1;
-            System.out.println(fileName);
             String[] tokens = fileName.split("/");
             if(tokens[6] == null || StringUtils.isEmpty(tokens[6])) {
                 throw new Exception("Error Path file for job spark");
             }
 
-            double lat = Double.parseDouble(tokens[6].substring(1, 3));
-            double lng = Double.parseDouble(tokens[6].substring(4, 7));
-            if(tokens[6].substring(0, 3).contains("S") || tokens[6].substring(1, 3).contains("s")) lat = lat * -1;
-            if(tokens[6].substring(3, 7).contains("W") || tokens[6].substring(3, 7).contains("w")) lng = lng * -1;
-            double latMin = lat;
-            double lngMin = lng;
-            double latMax = lat + (double)1200 * 1./(double)size;
-            double lngMax = lng + (double)1200 * .001/(double)size;
-            String newKey = String.valueOf(latMin) + ',' + String.valueOf(lngMin);
+            int lat = Integer.parseInt(tokens[6].substring(1, 3));
+            int lng = Integer.parseInt(tokens[6].substring(4, 7));
+            if(tokens[6].contains("S") || tokens[6].contains("s")) lat = lat * -1;
+            if(tokens[6].contains("W") || tokens[6].contains("w")) lng = lng * -1;
+            //double latMax = lat + (double)1200 * 1./(double)size;
+            //double lngMax = lng + (double)1200 * .001/(double)size;
+            String newKey = String.valueOf(lat) + ',' + String.valueOf(lng);
 
             /* Extract the heights of the tile */
             PortableDataStream content = stringPortableDataStreamTuple2._2;
@@ -43,7 +40,7 @@ public class TileOperations  {
             short[] height = new short[size * size];
             byte[] tmp = new byte[2];
 
-            for(int i = 1; i < pixels.length; i+=2) {
+            for(int i = 1;(counter < size * size) && (i < pixels.length); i+=2) {
                 tmp[0] = pixels[i-1];
                 tmp[1] = pixels[i];
 
@@ -54,48 +51,6 @@ public class TileOperations  {
         });
         return rddHeightsLatLong;
     }
-
-/*
-    public void generateTiles(JavaPairRDD<String, short[]> rdd) {
-        rdd.foreach(stringTuple2 -> {
-            short[] heights = stringTuple2._2;
-            // Bytes per pixel = 3;
-            // Width/Height = 1201;
-            ByteBuffer buffer = ByteBuffer.allocate(3 * 1201 * 1201);
-            for (short h : heights) {
-                    buffer.put(short2color(h));
-            }
-            buffer.rewind();
-            DataBufferByte dbb = new DataBufferByte(buffer.array(), buffer.capacity());
-            WritableRaster raster = Raster.createInterleavedRaster(
-                    dbb,
-                    1201, 1201,
-                    1201 * 3,
-                    3,
-                    new int[]{0, 1, 2},
-                    null);
-
-            ColorModel colorModel = new ComponentColorModel(
-                    ColorSpace.getInstance(ColorSpace.CS_sRGB),
-                    new int[]{8, 8, 8},
-                    false,
-                    false,
-                    Transparency.OPAQUE,
-                    DataBuffer.TYPE_BYTE);
-
-            BufferedImage bfImage = new BufferedImage(colorModel, raster, false, null);
-            insertTile(stringTuple2._1, bfImage.getSubimage(0, 0, 600, 600), 0);
-            insertTile(stringTuple2._1, bfImage.getSubimage(600, 0, 600, 600), 1);
-            insertTile(stringTuple2._1, bfImage.getSubimage(0, 600, 600, 600), 2);
-            insertTile(stringTuple2._1, bfImage.getSubimage(600, 600, 600, 600), 3);
-
-//            ImageIO.write(bfImage.getSubimage(0, 0, 600, 600), "png", new File("output" + 0 + ".png"));
-//            ImageIO.write(bfImage.getSubimage(600, 0, 600, 600), "png", new File("output" + 1 + ".png"));
-//            ImageIO.write(bfImage.getSubimage(0, 600, 600, 600), "png", new File("output" + 2 + ".png"));
-//            ImageIO.write(bfImage.getSubimage(600, 600, 600, 600), "png", new File("output" + 3 + ".png"));
-        });
-    }
-*/
 
     private static byte[] short2color(short s) {
         if (s > 250) return new byte[] {(byte) 255, (byte) 245, (byte) 235};
@@ -110,7 +65,7 @@ public class TileOperations  {
         return new byte[] {(byte) 8, (byte) 48, (byte) 107};
     }
 
-    protected static byte[] generatePng(short[] heights) throws IOException {
+    public static byte[] generatePng(short[] heights) throws IOException {
         // Bytes per pixel = 3;
         // Width/Height = 1201;
         ByteBuffer buffer = ByteBuffer.allocate(3 * 1201 * 1201);
@@ -146,10 +101,10 @@ public class TileOperations  {
 
     protected static Tile extractKey(String key, int zoom) {
         String[] tokens = key.split(",");
-        double latMin = Double.parseDouble(tokens[0]);
-        double lngMin = Double.parseDouble(tokens[1]);
-        int x = (int) Math.round(lngMin) + 180;
-        int y = (int) Math.round(latMin) + 90;
+        int latMin = Integer.parseInt(tokens[0]);
+        int lngMin = Integer.parseInt(tokens[1]);
+        int x = lngMin + 180;
+        int y = latMin + 90;
 
         return new Tile(x, y, zoom);
     }
