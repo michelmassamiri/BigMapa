@@ -1,32 +1,26 @@
 package bigdata;
 
+import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.conf.Configured;
 import org.apache.hadoop.hbase.HColumnDescriptor;
 import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.client.*;
+import org.apache.hadoop.hbase.mapreduce.TableInputFormat;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.hadoop.util.Tool;
 
-import javax.imageio.ImageIO;
-import java.awt.image.BufferedImage;
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 
-public class HBaseOperations extends Configured implements Tool {
+public class HBaseInit extends Configured implements Tool {
 
+    public static final byte[] TABLENAME = Bytes.toBytes("michelmassamiri");
     private static final byte[] POSFAMILY = Bytes.toBytes("positions");
     private static final byte[] DATAFAMILY = Bytes.toBytes("data");
-    private static final byte[] TABLENAME = Bytes.toBytes("michelmassamiri");
-    private static final byte[] LATMIN = Bytes.toBytes( "latmin");
-    private static final byte[] LATMAX = Bytes.toBytes( "latmax");
-    private static final byte[] LONGMIN = Bytes.toBytes(" longmin");
-    private static final byte[] LONGMAX = Bytes.toBytes( "longmax");
+    private static final byte[] X = Bytes.toBytes( "x");
+    private static final byte[] Y = Bytes.toBytes( "y");
     private static final byte[] ZOOM = Bytes.toBytes( "zoom");
     private static final byte[] IMAGE = Bytes.toBytes( "image");
-
-    private static Connection connection;
-    private static Table table;
 
     public static void create(Admin admin, HTableDescriptor table) throws IOException {
         if (admin.tableExists(table.getTableName())) {
@@ -53,36 +47,26 @@ public class HBaseOperations extends Configured implements Tool {
         }
     }
 
-    public static void createRow(String row, double latMin, double longMin, double latMax, double longMax, int zoom
-            , BufferedImage bf) {
+    public static Put createRow(Tile tile, byte[] bf) {
+        String row = tile.getX() + "," + tile.getY();
 
         Put put = new Put(Bytes.toBytes(row));
-        put.addColumn(POSFAMILY, ZOOM, Bytes.toBytes(zoom));
-        put.addColumn(POSFAMILY, LATMIN, Bytes.toBytes(latMin));
-        put.addColumn(POSFAMILY, LONGMIN, Bytes.toBytes(longMin));
-        put.addColumn(POSFAMILY, LATMAX, Bytes.toBytes(latMax));
-        put.addColumn(POSFAMILY, LONGMAX, Bytes.toBytes(longMax));
+        put.addColumn(POSFAMILY, ZOOM, Bytes.toBytes(tile.getZoom()));
+        put.addColumn(POSFAMILY, X, Bytes.toBytes(tile.getX()));
+        put.addColumn(POSFAMILY, Y, Bytes.toBytes(tile.getY()));
 
         /* Insert Image as png */
-        try {
-            ByteArrayOutputStream baos = new ByteArrayOutputStream();
-            ImageIO.write(bf, "png", baos);
-            baos.flush();
-            byte[] imageInByte = baos.toByteArray();
-            put.addColumn(DATAFAMILY, IMAGE, imageInByte);
-            table.put(put);
-        } catch (IOException e) {
-            e.printStackTrace();
-            System.exit(-1);
-        }
+        put.addColumn(DATAFAMILY, IMAGE, bf);
+        return put;
     }
 
     @Override
     public int run(String[] args) throws IOException{
-        connection = ConnectionFactory.createConnection(getConf());
+        Configuration conf = getConf();
+        Connection connection = ConnectionFactory.createConnection(conf);
         createTable(connection);
 
-        table = connection.getTable(TableName.valueOf(TABLENAME));
+        //table = connection.getTable(TableName.valueOf(TABLENAME));
         return 0;
     }
 }
