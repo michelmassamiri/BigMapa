@@ -5,7 +5,9 @@ let fs = require("fs");
 
 router.get('/api.tiles/readOutPut0', (req, res, next) => {
     fs.readFile('output0.png', function(err, data) {
-        if (err) throw err;
+        if (err) {
+            return res.status(500).send({error:{status: 500}, message: 'Invalid request'});
+        }
 
         // Encode to base64
         let encodedImage = new Buffer(data, 'binary');
