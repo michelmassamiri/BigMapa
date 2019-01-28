@@ -10,7 +10,7 @@ app.use(express.static('public'))
 
 router.get('/api.tiles/:z/:x/:y', (req, res, next) => {
     if (req.params.x && req.params.y && req.params.z) {
-        let rowID = req.params.x +','+ req.params.y
+        let rowID = req.params.x +','+ (180-Number(req.params.y));
         console.log(rowID);
         
         let val
