@@ -20,16 +20,16 @@ public class BigMapa  {
         SparkConf conf = new SparkConf().setAppName("Test");
         JavaSparkContext context = new JavaSparkContext(conf);
 
-        JavaPairRDD<String, PortableDataStream> rdd = context.binaryFiles("hdfs://young:9000/user/raw_data/dem3");
+        JavaPairRDD<String, PortableDataStream> rdd = context.binaryFiles("hdfs://ripoux:9000/user/raw_data/dem3");
         int numPartisions = context.sc().getExecutorIds().length();
         rdd.repartition(numPartisions);
 
         Configuration hconf = HBaseConfiguration.create();
-        hconf.set(org.apache.hadoop.hbase.mapreduce.TableOutputFormat.OUTPUT_TABLE, "michelmassamiri");
+        hconf.set(org.apache.hadoop.hbase.mapreduce.TableOutputFormat.OUTPUT_TABLE, "micheldomexic");
         Job newAPIJobConfiguration = Job.getInstance(hconf);
         newAPIJobConfiguration.setOutputFormatClass(org.apache.hadoop.hbase.mapreduce.TableOutputFormat.class);
         //newAPIJobConfiguration.set(org.apache.hadoop.hbase.mapreduce.TableOutputFormat.OUTPUT_TABLE, "michelmassamiri");
-        FileOutputFormat.setOutputPath(newAPIJobConfiguration, new Path("hdfs://young:9000/user/mmassamire/tmp"));
+        FileOutputFormat.setOutputPath(newAPIJobConfiguration, new Path("hdfs://ripoux:9000/user/kenfontaine/tmp"));
 
         int exitCode = ToolRunner.run(hconf, new HBaseInit(), args);
         if(exitCode == 1) {
