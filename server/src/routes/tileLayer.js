@@ -1,7 +1,12 @@
 let express = require('express')
+let path = require('path')
 let router = express.Router()
 
+let app =  express()
+
 const hbase = require('hbase')
+
+app.use(express.static('public'))
 
 router.get('/api.tiles/:z/:x/:y', (req, res, next) => {
     if (req.params.x && req.params.y && req.params.z) {
@@ -13,11 +18,15 @@ router.get('/api.tiles/:z/:x/:y', (req, res, next) => {
             .table('micheldomexic')
             .row(rowID)
             .get('data:image', (error, value) => {
-                val = value[0].$
-                let data = new Buffer(val, 'base64')
-                console.log(val);
-                res.contentType('image/png');
-                res.send(data);
+                if (error) {
+                    res.sendFile(path.join(__dirname, '../../public/default.png'))
+                }
+                else {
+                    val = value[0].$
+                    let data = new Buffer(val, 'base64')
+                    res.contentType('image/png');
+                    res.send(data);
+                }
             })
     }
 })
