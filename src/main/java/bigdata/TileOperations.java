@@ -13,6 +13,7 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.util.Base64;
 
 public class TileOperations  {
     private static final int size = 1201;
@@ -122,8 +123,7 @@ public class TileOperations  {
         })
         .reduceByKey((v1, v2) -> {
             /* Calcul de la moyenne de deux valeurs */
-
-            return null;
+            return zoom(v1, v2, v1.getX()/diviser, v1.getY()/diviser, diviser, zoom);
         });
 
         return rddZoomFour;
@@ -162,7 +162,9 @@ public class TileOperations  {
         ImageIO.write(res, "png", baos);
         baos.flush();
 
-        return new Tile(xCommun, yCommun, zoom, baos.toByteArray());
+        Tile tile = new Tile(xCommun, yCommun, zoom, baos.toByteArray());
+        tile.setIntermediate(true);
+        return tile;
     }
 
     private static BufferedImage resize(BufferedImage img, int newW, int newH) {

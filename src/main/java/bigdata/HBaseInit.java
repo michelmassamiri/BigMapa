@@ -11,6 +11,7 @@ import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.hadoop.util.Tool;
 
 import java.io.IOException;
+import java.util.Base64;
 
 public class HBaseInit extends Configured implements Tool {
 
@@ -48,7 +49,7 @@ public class HBaseInit extends Configured implements Tool {
     }
 
     public static Put createRow(Tile tile) {
-        String row = tile.getX() + "," + tile.getY();
+        String row = tile.getX() + "," + tile.getY() + "," + tile.getZoom();
 
         Put put = new Put(Bytes.toBytes(row));
         put.addColumn(POSFAMILY, ZOOM, Bytes.toBytes(tile.getZoom()));
@@ -56,7 +57,7 @@ public class HBaseInit extends Configured implements Tool {
         put.addColumn(POSFAMILY, Y, Bytes.toBytes(tile.getY()));
 
         /* Insert Image as png */
-        //put.addColumn(DATAFAMILY, IMAGE, tile.getImage());
+        put.addColumn(DATAFAMILY, IMAGE, Base64.getEncoder().encode(tile.getImage()));
         return put;
     }
 

@@ -37,8 +37,14 @@ public class BigMapa  {
         }
 
         JavaPairRDD<String, short[]> rddLatLong = TileOperations.extractHeightLatLong(rdd).cache();
-        JavaPairRDD<ImmutableBytesWritable, Put> rddToSave = HbaseOperations.saveTileToHbase(rddLatLong).cache();
-        rddToSave.saveAsNewAPIHadoopDataset(newAPIJobConfiguration.getConfiguration());
+        JavaPairRDD<String, Tile> rddZoom5 = TileOperations.mapToForthZoom(rddLatLong, 5, 2).cache();
+
+        //JavaPairRDD<ImmutableBytesWritable, Put> rddToSaveZoom6 = HbaseOperations.saveTileToHbase(rddLatLong).cache();
+        //rddToSaveZoom6.saveAsNewAPIHadoopDataset(newAPIJobConfiguration.getConfiguration());
+
+        JavaPairRDD<ImmutableBytesWritable, Put> rddToSaveZoom5 = HbaseOperations.saveToHbase(rddZoom5).cache();
+        rddToSaveZoom5.saveAsNewAPIHadoopDataset(newAPIJobConfiguration.getConfiguration());
+
 
         context.close();
     }

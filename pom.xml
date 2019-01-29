@@ -41,7 +41,7 @@
                 <configuration>
                     <archive>
                         <manifest>
-                            <mainClass>bigdata.Test</mainClass>
+                            <mainClass>bigdata.BigMapa</mainClass>
                         </manifest>
                     </archive>
                 </configuration>
