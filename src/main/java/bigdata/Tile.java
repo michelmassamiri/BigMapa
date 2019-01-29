@@ -6,9 +6,9 @@ public class Tile implements Serializable {
     private int x;
     private int y;
     private int zoom;
-    private byte[] image;
+    private short[] image;
 
-    public Tile(int x, int y, int zoom, byte[] image) {
+    public Tile(int x, int y, int zoom, short[] image) {
         this.x = x;
         this.y = y;
         this.zoom = zoom;
@@ -33,7 +33,7 @@ public class Tile implements Serializable {
         return zoom;
     }
 
-    public byte[] getImage() {
+    public short[] getImage() {
         return image;
     }
 
@@ -49,7 +49,7 @@ public class Tile implements Serializable {
         this.zoom = zoom;
     }
 
-    public void setImage(byte[] image) {
+    public void setImage(short[] image) {
         this.image = image;
     }
 }

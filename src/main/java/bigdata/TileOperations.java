@@ -99,14 +99,32 @@ public class TileOperations  {
         return imageInByte;
     }
 
-    protected static Tile extractKey(String key, int zoom) {
+    protected static Tile extractKey(String key, int zoom, short[] img) {
         String[] tokens = key.split(",");
         int latMin = Integer.parseInt(tokens[0]);
         int lngMin = Integer.parseInt(tokens[1]);
         int x = lngMin + 180;
         int y = latMin + 90;
 
-        return new Tile(x, y, zoom);
+        return new Tile(x, y, zoom, img);
+    }
+
+    protected static JavaPairRDD<String, Tile>  mapToForthZoom(JavaPairRDD<String, short[]> rddEntry, int zoom, int diviser) {
+        JavaPairRDD<String, Tile> rddZoomFour = rddEntry.mapToPair(stringTuple2 -> {
+
+            short[] heights = stringTuple2._2;
+            Tile tile = TileOperations.extractKey(stringTuple2._1, zoom, heights);
+
+            String newKey = tile.getX()/diviser + "," + tile.getY()/diviser + "," + tile.getZoom();
+            return new Tuple2<>(newKey, tile);
+        })
+        .reduceByKey((v1, v2) -> {
+            /* Calcul de la moyenne de deux valeurs */
+
+            return null;
+        });
+
+        return rddZoomFour;
     }
 
 }
