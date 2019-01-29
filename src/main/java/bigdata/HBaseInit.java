@@ -47,7 +47,7 @@ public class HBaseInit extends Configured implements Tool {
         }
     }
 
-    public static Put createRow(Tile tile, byte[] bf) {
+    public static Put createRow(Tile tile) {
         String row = tile.getX() + "," + tile.getY();
 
         Put put = new Put(Bytes.toBytes(row));
@@ -56,7 +56,7 @@ public class HBaseInit extends Configured implements Tool {
         put.addColumn(POSFAMILY, Y, Bytes.toBytes(tile.getY()));
 
         /* Insert Image as png */
-        put.addColumn(DATAFAMILY, IMAGE, bf);
+        put.addColumn(DATAFAMILY, IMAGE, tile.getImage());
         return put;
     }
 
