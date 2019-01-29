@@ -9,6 +9,7 @@ import javax.imageio.ImageIO;
 import java.awt.*;
 import java.awt.color.ColorSpace;
 import java.awt.image.*;
+import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -99,7 +100,7 @@ public class TileOperations  {
         return imageInByte;
     }
 
-    protected static Tile extractKey(String key, int zoom, short[] img) {
+    protected static Tile extractKey(String key, int zoom, byte[] img) {
         String[] tokens = key.split(",");
         int latMin = Integer.parseInt(tokens[0]);
         int lngMin = Integer.parseInt(tokens[1]);
@@ -113,7 +114,8 @@ public class TileOperations  {
         JavaPairRDD<String, Tile> rddZoomFour = rddEntry.mapToPair(stringTuple2 -> {
 
             short[] heights = stringTuple2._2;
-            Tile tile = TileOperations.extractKey(stringTuple2._1, zoom, heights);
+            byte[] image = generatePng(heights);
+            Tile tile = TileOperations.extractKey(stringTuple2._1, zoom, image);
 
             String newKey = tile.getX()/diviser + "," + tile.getY()/diviser + "," + tile.getZoom();
             return new Tuple2<>(newKey, tile);
@@ -125,6 +127,53 @@ public class TileOperations  {
         });
 
         return rddZoomFour;
+    }
+
+    private static Tile zoom(Tile t1, Tile t2, int xCommun, int yCommun, int div, int zoom) throws Exception {
+        BufferedImage tmp1;
+        BufferedImage tmp2;
+        if (!t1.isIntermediate()) {
+            tmp1 = new BufferedImage(1200, 1200, BufferedImage.TYPE_INT_RGB);
+            Graphics g1 = tmp1.getGraphics();
+            BufferedImage bf1 =  ImageIO.read(new ByteArrayInputStream(t1.getImage()));
+            g1.drawImage(resize(bf1, 1200 / div, 1200 / div), ((t1.getX()%div) * 1200 / div), ((t1.getY()%div) * 1200 / div), null);
+        } else {
+            tmp1 = ImageIO.read(new ByteArrayInputStream(t1.getImage()));
+        }
+
+        if(!t2.isIntermediate()) {
+            tmp2 = new BufferedImage(1200, 1200, BufferedImage.TYPE_INT_RGB);
+            Graphics g2 = tmp2.getGraphics();
+            BufferedImage bf2 =  ImageIO.read(new ByteArrayInputStream(t2.getImage()));
+            g2.drawImage(resize(bf2, 1200 / div, 1200 / div), ((t2.getX()%div) * 1200 / div), ((t2.getY()%div) * 1200 / div), null);
+        } else {
+            tmp2 = ImageIO.read(new ByteArrayInputStream(t2.getImage()));
+        }
+
+        // Merge lse deux en laissant le vide
+        BufferedImage res = new BufferedImage(1200, 1200, BufferedImage.TYPE_INT_RGB);
+        for (int j = 0; j < 1200; ++j) {
+            for (int i = 0; i < 1200; ++i) {
+                res.setRGB(i, j, (tmp1.getRGB(i, j) + tmp2.getRGB(i, j)));
+            }
+        }
+
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        ImageIO.write(res, "png", baos);
+        baos.flush();
+
+        return new Tile(xCommun, yCommun, zoom, baos.toByteArray());
+    }
+
+    private static BufferedImage resize(BufferedImage img, int newW, int newH) {
+        Image tmp = img.getScaledInstance(newW, newH, Image.SCALE_SMOOTH);
+        BufferedImage dimg = new BufferedImage(newW, newH, BufferedImage.TYPE_INT_RGB);
+
+        Graphics2D g2d = dimg.createGraphics();
+        g2d.drawImage(tmp, 0, 0, null);
+        g2d.dispose();
+
+        return dimg;
     }
 
 }

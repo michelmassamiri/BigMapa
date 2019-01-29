@@ -6,19 +6,22 @@ public class Tile implements Serializable {
     private int x;
     private int y;
     private int zoom;
-    private short[] image;
+    private boolean isIntermediate;
+    private byte[] image;
 
-    public Tile(int x, int y, int zoom, short[] image) {
+    public Tile(int x, int y, int zoom, byte[] image) {
         this.x = x;
         this.y = y;
         this.zoom = zoom;
         this.image = image;
+        this.isIntermediate = false;
     }
 
     public Tile(int x, int y, int zoom) {
         this.x = x;
         this.y = y;
         this.zoom = zoom;
+        this.isIntermediate = false;
     }
 
     public int getX() {
@@ -33,7 +36,7 @@ public class Tile implements Serializable {
         return zoom;
     }
 
-    public short[] getImage() {
+    public byte[] getImage() {
         return image;
     }
 
@@ -49,7 +52,15 @@ public class Tile implements Serializable {
         this.zoom = zoom;
     }
 
-    public void setImage(short[] image) {
+    public void setImage(byte[] image) {
         this.image = image;
+    }
+
+    public boolean isIntermediate() {
+        return isIntermediate;
+    }
+
+    public void setIntermediate(boolean val) {
+        this.isIntermediate = val;
     }
 }

@@ -56,7 +56,7 @@ public class HBaseInit extends Configured implements Tool {
         put.addColumn(POSFAMILY, Y, Bytes.toBytes(tile.getY()));
 
         /* Insert Image as png */
-        put.addColumn(DATAFAMILY, IMAGE, tile.getImage());
+        //put.addColumn(DATAFAMILY, IMAGE, tile.getImage());
         return put;
     }
 
