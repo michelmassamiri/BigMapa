@@ -14,10 +14,10 @@ public class HbaseOperations implements Serializable {
         JavaPairRDD<ImmutableBytesWritable, Put> rddHeightsBytesPng = rdd.mapToPair(stringTuple2 -> {
 
             short[] heights = stringTuple2._2;
-            byte[] image = TileOperations.generatePng(heights);
-            Tile tile = TileOperations.extractKey(stringTuple2._1, 7);
+            short[] image = TileOperations.generatePng(heights);
+            Tile tile = TileOperations.extractKey(stringTuple2._1, 7, image);
 
-            Put put = HBaseInit.createRow(tile, image);
+            Put put = HBaseInit.createRow(tile);
             return new Tuple2<>(new ImmutableBytesWritable(), put);
         });
 
