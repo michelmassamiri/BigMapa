@@ -17,7 +17,7 @@ router.get('/api.tiles/:z/:x/:y', (req, res, next) => {
         hbase()
             .table('BigMapa')
             .row(rowID)
-            .get('data:image', (error, dataue) => {
+            .get('data:image', (error, value) => {
                 if (error) {
                     res.sendFile(path.join(__dirname, '../../public/default.png'))
                 } else {
